@@ -1,0 +1,23 @@
+{
+  "name": "ai-career-advisor",
+  "version": "1.0.0",
+  "description": "AI Career Advisor Project",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run server --prefix server\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "openai": "^6.33.0",
+    "pdf-parse": "^1.1.1",
+    "react-router-dom": "^7.9.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
