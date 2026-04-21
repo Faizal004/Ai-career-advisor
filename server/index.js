@@ -3,7 +3,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const pdfParse = require("pdf-parse/lib/pdf-parse");
+const pdfParse = require("pdf-parse");
 require("dotenv").config();
 
 const authenticate = require("./middleware/authenticate");
@@ -62,8 +62,16 @@ app.post(
       const filePath = req.file.path;
 
       // 📄 Extract PDF text
-      const data = await pdfParse(fs.readFileSync(filePath));
-      const text = data.text;
+      const pdfParseLib = require("pdf-parse");
+      const pdfParse = pdfParseLib.default || pdfParseLib;
+
+// ✅ DEBUG
+console.log("TYPE OF pdfParse:", typeof pdfParse);
+
+const pdfBuffer = fs.readFileSync(filePath);
+
+const data = await pdfParse(pdfBuffer);
+const text = data.text;
 
       const cleanText = text.toLowerCase();
 
