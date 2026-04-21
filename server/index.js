@@ -3,6 +3,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const pdfParse = require("pdf-parse"); // ✅ SIMPLE IMPORT
 require("dotenv").config();
 
 const authenticate = require("./middleware/authenticate");
@@ -54,18 +55,13 @@ app.post(
 
       const filePath = req.file.path;
 
-      /* ================= PDF PARSE FIX ================= */
+      /* ================= PDF PARSE ================= */
 
-      const pdfParseLib = require("pdf-parse");
-
-      // 🔥 CRITICAL FIX (Node 22 compatibility)
-      const pdfParse = pdfParseLib.default;
-
-      console.log("TYPE OF pdfParse:", typeof pdfParse); // should be function
+      console.log("TYPE OF pdfParse:", typeof pdfParse); // ✅ should be function
 
       const pdfBuffer = fs.readFileSync(filePath);
 
-      const data = await pdfParse(pdfBuffer);
+      const data = await pdfParse(pdfBuffer); // ✅ WORKING
       const text = data.text;
 
       /* ================= SKILL DETECTION ================= */
