@@ -10,15 +10,32 @@ const authenticate = require("./middleware/authenticate");
 const { analyzeData } = require("./services/analyzeService");
 
 const app = express();
+
+/* ================= MIDDLEWARE ================= */
+
+// 🔥 CORS (for now allow all, later restrict to your Vercel domain)
 app.use(cors());
+
+// Parse JSON
 app.use(express.json());
+
+/* ================= ROOT ROUTE ================= */
+
+// ✅ For testing backend
+app.get("/", (req, res) => {
+  res.send("🚀 Backend is running successfully");
+});
 
 /* ================= MULTER SETUP ================= */
 
-if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
+// ✅ Safe upload directory
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
     cb(null, Date.now() + path.extname(file.originalname)),
 });
@@ -45,7 +62,7 @@ app.post(
       const filePath = req.file.path;
 
       // 📄 Extract PDF text
-      const data = await pdfParse(fs.readFileSync(filePath));     
+      const data = await pdfParse(fs.readFileSync(filePath));
       const text = data.text;
 
       const cleanText = text.toLowerCase();
@@ -74,7 +91,7 @@ app.post(
       } catch (aiErr) {
         console.log("❌ AI ERROR:", aiErr.message);
 
-        // 🔥 FALLBACK (IMPORTANT)
+        // 🔥 FALLBACK SYSTEM
         result = {
           rag: {
             role: "Web Developer",
@@ -103,8 +120,10 @@ app.post(
         };
       }
 
-      // 🧹 Delete uploaded file
-      fs.unlinkSync(filePath);
+      // 🧹 Safe file delete
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
 
       // ✅ FINAL RESPONSE
       res.json({
@@ -163,4 +182,9 @@ app.post("/api/manual-input", authenticate, async (req, res) => {
 
 /* ================= SERVER ================= */
 
-app.listen(5000, () => console.log("🚀 Server running on port 5000"));
+// 🔥 IMPORTANT FIX FOR RENDER
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
