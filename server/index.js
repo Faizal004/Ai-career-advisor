@@ -12,23 +12,19 @@ const app = express();
 
 /* ================= MIDDLEWARE ================= */
 
-// Allow frontend (you can restrict later)
 app.use(cors());
-
-// Parse JSON
 app.use(express.json());
 
 /* ================= ROOT ROUTE ================= */
 
-// Test route
 app.get("/", (req, res) => {
   res.send("🚀 Backend is running successfully");
 });
 
 /* ================= MULTER SETUP ================= */
 
-// Upload folder (Render safe)
 const uploadDir = path.join(__dirname, "uploads");
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
@@ -43,7 +39,6 @@ const upload = multer({ storage });
 
 /* ================= ROUTES ================= */
 
-/* 🔥 RESUME UPLOAD */
 app.post(
   "/api/upload-resume",
   authenticate,
@@ -59,18 +54,24 @@ app.post(
 
       const filePath = req.file.path;
 
-      // ✅ CORRECT PDF PARSE FIX
-      const pdfParse = require("pdf-parse");
+      /* ================= PDF PARSE FIX ================= */
 
-      console.log("TYPE OF pdfParse:", typeof pdfParse);
+      const pdfParseLib = require("pdf-parse");
+
+      // 🔥 CRITICAL FIX (Node 22 compatibility)
+      const pdfParse = pdfParseLib.default;
+
+      console.log("TYPE OF pdfParse:", typeof pdfParse); // should be function
 
       const pdfBuffer = fs.readFileSync(filePath);
+
       const data = await pdfParse(pdfBuffer);
       const text = data.text;
 
+      /* ================= SKILL DETECTION ================= */
+
       const cleanText = text.toLowerCase();
 
-      // 🔍 Basic skill detection
       const skills = [
         "python",
         "react",
@@ -83,7 +84,6 @@ app.post(
       let result;
 
       try {
-        // 🔥 AI + RAG ANALYSIS
         result = await analyzeData({
           text,
           skills,
@@ -94,7 +94,6 @@ app.post(
       } catch (aiErr) {
         console.log("❌ AI ERROR:", aiErr.message);
 
-        // ✅ FALLBACK
         result = {
           rag: {
             role: "Web Developer",
@@ -122,12 +121,14 @@ app.post(
         };
       }
 
-      // 🧹 Delete file safely
+      /* ================= CLEANUP ================= */
+
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
-      // ✅ RESPONSE
+      /* ================= RESPONSE ================= */
+
       res.json({
         message: "Resume Analysis Complete 🚀",
         basicAnalysis: { skills },
@@ -136,13 +137,14 @@ app.post(
       });
 
     } catch (err) {
-      console.error("🔥 FULL ERROR:", err);
+      console.error("🔥 FULL ERROR:", err.stack);
       res.status(500).json({ error: err.message });
     }
   }
 );
 
 /* 🔥 MANUAL INPUT */
+
 app.post("/api/manual-input", authenticate, async (req, res) => {
   try {
     const { skills, education, goal } = req.body;
@@ -180,7 +182,6 @@ app.post("/api/manual-input", authenticate, async (req, res) => {
 
 /* ================= SERVER ================= */
 
-// 🔥 IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
