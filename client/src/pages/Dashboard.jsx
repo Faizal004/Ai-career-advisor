@@ -659,9 +659,9 @@ function RoadmapCard({ phase, index, total }) {
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: c.l, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "transform 0.2s", transform: on ? "scale(1.08)" : "none" }}>
-              <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 14, fontWeight: 800, color: c.t, fontFamily: "'Outfit',sans-serif" }}>
+              <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 14, fontWeight: 800, color: c.t }}>
                 {String(index + 1).padStart(2, "0")}
-              </span>
+              </span> 
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: c.t, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>Phase {index + 1}</div>
