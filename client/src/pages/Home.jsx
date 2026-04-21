@@ -97,11 +97,11 @@ export default function Home() {
       if (mode === "upload") {
         const fd = new FormData();
         fd.append("resume", file);
-        res = await axios.post("http://localhost:5000/api/upload-resume", fd, {
+        res = await axios.post("https://ai-career-advisor-a0f5.onrender.com/api/upload-resume", fd, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
         });
       } else {
-        res = await axios.post("http://localhost:5000/api/manual-input", formData, {
+        res = await axios.post("https://ai-career-advisor-a0f5.onrender.com/api/manual-input", formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
