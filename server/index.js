@@ -3,7 +3,6 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const pdfParse = require("pdf-parse");
 require("dotenv").config();
 
 const authenticate = require("./middleware/authenticate");
@@ -13,7 +12,7 @@ const app = express();
 
 /* ================= MIDDLEWARE ================= */
 
-// 🔥 CORS (for now allow all, later restrict to your Vercel domain)
+// Allow frontend (you can restrict later)
 app.use(cors());
 
 // Parse JSON
@@ -21,14 +20,14 @@ app.use(express.json());
 
 /* ================= ROOT ROUTE ================= */
 
-// ✅ For testing backend
+// Test route
 app.get("/", (req, res) => {
   res.send("🚀 Backend is running successfully");
 });
 
 /* ================= MULTER SETUP ================= */
 
-// ✅ Safe upload directory
+// Upload folder (Render safe)
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
@@ -54,24 +53,20 @@ app.post(
       console.log("🚀 UPLOAD API HIT");
       console.log("📄 FILE:", req.file);
 
-      // ❗ Check file exists
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
       const filePath = req.file.path;
 
-      // 📄 Extract PDF text
-      const pdfParseLib = require("pdf-parse");
-      const pdfParse = pdfParseLib.default || pdfParseLib;
+      // ✅ CORRECT PDF PARSE FIX
+      const pdfParse = require("pdf-parse");
 
-// ✅ DEBUG
-console.log("TYPE OF pdfParse:", typeof pdfParse);
+      console.log("TYPE OF pdfParse:", typeof pdfParse);
 
-const pdfBuffer = fs.readFileSync(filePath);
-
-const data = await pdfParse(pdfBuffer);
-const text = data.text;
+      const pdfBuffer = fs.readFileSync(filePath);
+      const data = await pdfParse(pdfBuffer);
+      const text = data.text;
 
       const cleanText = text.toLowerCase();
 
@@ -99,7 +94,7 @@ const text = data.text;
       } catch (aiErr) {
         console.log("❌ AI ERROR:", aiErr.message);
 
-        // 🔥 FALLBACK SYSTEM
+        // ✅ FALLBACK
         result = {
           rag: {
             role: "Web Developer",
@@ -108,8 +103,7 @@ const text = data.text;
             readinessScore: 30,
           },
           aiAnalysis: {
-            career_summary:
-              "AI unavailable, showing basic analysis.",
+            career_summary: "AI unavailable, basic analysis shown.",
             strengths: skills,
             weaknesses: [
               "Need more projects",
@@ -128,19 +122,15 @@ const text = data.text;
         };
       }
 
-      // 🧹 Safe file delete
+      // 🧹 Delete file safely
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
-      // ✅ FINAL RESPONSE
+      // ✅ RESPONSE
       res.json({
         message: "Resume Analysis Complete 🚀",
-
-        basicAnalysis: {
-          skills,
-        },
-
+        basicAnalysis: { skills },
         ragAnalysis: result.rag,
         aiAnalysis: result.aiAnalysis,
       });
@@ -190,7 +180,7 @@ app.post("/api/manual-input", authenticate, async (req, res) => {
 
 /* ================= SERVER ================= */
 
-// 🔥 IMPORTANT FIX FOR RENDER
+// 🔥 IMPORTANT FOR RENDER
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
