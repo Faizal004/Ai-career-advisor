@@ -170,6 +170,23 @@ export default function Register() {
     return e;
   }
 
+  /* ── Firebase error → friendly message ── */
+  function friendlyError(err) {
+    const code = err?.code || "";
+    const map = {
+      "auth/email-already-in-use":    "This email is already registered. Try signing in instead.",
+      "auth/invalid-email":           "That email address doesn't look right. Please check it.",
+      "auth/weak-password":           "Your password is too weak. Use at least 8 characters with numbers and symbols.",
+      "auth/network-request-failed":  "No internet connection. Please check your network and try again.",
+      "auth/too-many-requests":       "Too many attempts. Please wait a moment and try again.",
+      "auth/user-disabled":           "This account has been disabled. Please contact support.",
+      "auth/operation-not-allowed":   "Email/password sign-up is not enabled. Please contact support.",
+      "auth/popup-closed-by-user":    "Google sign-in was cancelled. Please try again.",
+      "auth/cancelled-popup-request": "Another sign-in is in progress. Please wait.",
+    };
+    return map[code] || err?.message || "Something went wrong. Please try again.";
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
@@ -177,14 +194,21 @@ export default function Register() {
     setErrors({});
     setLoading(true);
     try {
-      await register(form.email, form.password, {
-        displayName: form.fullName,
-        careerGoal:  form.role,
-        level:       form.level,
-      });
+      // Firebase createUserWithEmailAndPassword only takes email + password.
+      // We save extra profile data (name, role, level) after account creation.
+      const userCredential = await register(form.email, form.password);
+
+      // Save extra metadata to user profile if your AuthContext supports it
+      if (userCredential?.user?.updateProfile) {
+        await userCredential.user.updateProfile({ displayName: form.fullName });
+      }
+
+      // Optionally save careerGoal + level to Firestore/your backend here:
+      // await saveUserProfile(userCredential.user.uid, { careerGoal: form.role, level: form.level });
+
       navigate("/home");
     } catch (err) {
-      setErrors({ submit: err.message });
+      setErrors({ submit: friendlyError(err) });
     } finally {
       setLoading(false);
     }
@@ -195,7 +219,7 @@ export default function Register() {
       await loginWithGoogle();
       navigate("/home");
     } catch (err) {
-      setErrors({ submit: err.message });
+      setErrors({ submit: friendlyError(err) });
     }
   };
 
@@ -496,8 +520,18 @@ export default function Register() {
 
               {/* API error */}
               {errors.submit && (
-                <div style={{ background: "#fff1f2", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "10px 14px", fontSize: 13.5, color: "#dc2626", fontWeight: 500 }}>
-                  ⚠️ {errors.submit}
+                <div style={{ background: "#fff1f2", border: "1px solid rgba(239,68,68,0.28)", borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+                    <span style={{ fontSize: 14, color: "#dc2626", fontWeight: 600, lineHeight: 1.6 }}>{errors.submit}</span>
+                  </div>
+                  {errors.submit.toLowerCase().includes("already registered") && (
+                    <div style={{ paddingLeft: 26 }}>
+                      <Link to="/" style={{ fontSize: 13, color: "#6366f1", fontWeight: 700, textDecoration: "none" }}>
+                        → Sign in to your existing account
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 

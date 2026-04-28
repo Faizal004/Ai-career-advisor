@@ -61,25 +61,45 @@ export default function Login() {
 
   useEffect(() => { setTimeout(() => setMounted(true), 60); }, []);
 
+  const [submitError, setSubmitError] = useState("");
+
+  function friendlyError(err) {
+    const code = err?.code || "";
+    const map = {
+      "auth/user-not-found":          "No account found with this email. Please register first.",
+      "auth/wrong-password":          "Incorrect password. Please try again.",
+      "auth/invalid-credential":      "Incorrect email or password. Please try again.",
+      "auth/invalid-email":           "That email address doesn't look right.",
+      "auth/user-disabled":           "This account has been disabled. Please contact support.",
+      "auth/too-many-requests":       "Too many failed attempts. Please wait a moment and try again.",
+      "auth/network-request-failed":  "No internet connection. Please check your network.",
+      "auth/popup-closed-by-user":    "Google sign-in was cancelled. Please try again.",
+      "auth/cancelled-popup-request": "Another sign-in is already in progress.",
+    };
+    return map[code] || err?.message || "Something went wrong. Please try again.";
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
     setLoading(true);
     try {
       await login(email, password);
       navigate("/home");
     } catch (err) {
-      alert(err.message);
+      setSubmitError(friendlyError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    setSubmitError("");
     try {
       await loginWithGoogle();
       navigate("/home");
     } catch (err) {
-      alert(err.message);
+      setSubmitError(friendlyError(err));
     }
   };
 
